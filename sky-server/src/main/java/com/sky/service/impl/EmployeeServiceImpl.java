@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
+import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
@@ -82,9 +83,9 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
 
-        // TODO 后期修改为获取当前用户
-        employee.setCreateUser(1L);
-        employee.setUpdateUser(1L);
+        Long userId = BaseContext.getCurrentId();
+        employee.setCreateUser(userId);
+        employee.setUpdateUser(userId);
 
         save(employee);
         return Result.success();
