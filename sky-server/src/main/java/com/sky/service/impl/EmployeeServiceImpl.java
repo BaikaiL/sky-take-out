@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import static com.sky.constant.MessageConstant.ACCOUNT_NOT_FOUND;
+import static com.sky.constant.MessageConstant.UNKNOWN_ERROR;
 import static com.sky.constant.PasswordConstant.DEFAULT_PASSWORD;
 import static com.sky.constant.StatusConstant.ENABLE;
 
@@ -130,11 +131,34 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         Employee employee = Employee.builder()
                 .id(id)
                 .status(status)
+                .updateUser(BaseContext.getCurrentId())
+                .updateTime(LocalDateTime.now())
                 .build();
 
         int update = employeeMapper.updateById(employee);
         if(update == 0) {
             return Result.error(ACCOUNT_NOT_FOUND);
+        }
+        return Result.success();
+    }
+
+    @Override
+    public Result<Employee> getUserById(Long id) {
+        Employee employee = getById(id);
+        // 设置敏感字段不可见
+        employee.setPassword("****");
+        return Result.success(employee);
+    }
+
+    public Result updateUser(EmployeeDTO employeeDTO){
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        boolean updated = updateById(employee);
+        if(!updated){
+            return Result.error(UNKNOWN_ERROR);
         }
         return Result.success();
     }

@@ -7,7 +7,6 @@ import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
-import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
@@ -96,6 +95,16 @@ public class EmployeeController {
     public Result startOrStop(@PathVariable Integer status, Long id){
         log.info("更新员工状态：{}，{}", status,id);
         return employeeService.startOrStop(status, id);
+    }
+
+    @GetMapping("/{id}")
+    public Result<Employee> getUserById(@PathVariable Long id){
+        return employeeService.getUserById(id);
+    }
+
+    @PutMapping
+    public Result updateUser(@RequestBody EmployeeDTO employeeDTO){
+        return employeeService.updateUser(employeeDTO);
     }
 
 }
