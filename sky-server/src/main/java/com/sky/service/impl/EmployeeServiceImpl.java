@@ -86,12 +86,12 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
 
         employee.setStatus(ENABLE);
         employee.setPassword(DigestUtils.md5DigestAsHex(DEFAULT_PASSWORD.getBytes()));
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
-
-        Long userId = BaseContext.getCurrentId();
-        employee.setCreateUser(userId);
-        employee.setUpdateUser(userId);
+        // employee.setCreateTime(LocalDateTime.now());
+        // employee.setUpdateTime(LocalDateTime.now());
+        //
+        // Long userId = BaseContext.getCurrentId();
+        // employee.setCreateUser(userId);
+        // employee.setUpdateUser(userId);
 
         save(employee);
         return Result.success();
@@ -115,6 +115,8 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
             wrapper.like(Employee::getName, name);
         }
 
+        wrapper.orderByDesc(Employee::getUpdateTime);
+
         Page<Employee> employeePage = employeeMapper.selectPage(page, wrapper);
 
         return Result.success(employeePage);
@@ -131,8 +133,8 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         Employee employee = Employee.builder()
                 .id(id)
                 .status(status)
-                .updateUser(BaseContext.getCurrentId())
-                .updateTime(LocalDateTime.now())
+//                .updateUser(BaseContext.getCurrentId())
+//                .updateTime(LocalDateTime.now())
                 .build();
 
         int update = employeeMapper.updateById(employee);
@@ -153,9 +155,9 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     public Result updateUser(EmployeeDTO employeeDTO){
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);
-
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+        // 已经使用公共字段填充，不需要自己设置
+        // employee.setUpdateTime(LocalDateTime.now());
+        // employee.setUpdateUser(BaseContext.getCurrentId());
         boolean updated = updateById(employee);
         if(!updated){
             return Result.error(UNKNOWN_ERROR);
