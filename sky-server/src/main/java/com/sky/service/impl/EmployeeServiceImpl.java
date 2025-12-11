@@ -25,6 +25,7 @@ import org.springframework.util.DigestUtils;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
+import static com.sky.constant.MessageConstant.ACCOUNT_NOT_FOUND;
 import static com.sky.constant.PasswordConstant.DEFAULT_PASSWORD;
 import static com.sky.constant.StatusConstant.ENABLE;
 
@@ -51,7 +52,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         //2、处理各种异常情况（用户名不存在、密码不对、账号被锁定）
         if (employee == null) {
             //账号不存在
-            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
+            throw new AccountNotFoundException(ACCOUNT_NOT_FOUND);
         }
 
         //密码比对
@@ -116,6 +117,26 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         Page<Employee> employeePage = employeeMapper.selectPage(page, wrapper);
 
         return Result.success(employeePage);
+    }
+
+    /**
+     * 更改员工状态
+     * @param status
+     * @param id
+     * @return
+     */
+    @Override
+    public Result startOrStop(Integer status, Long id) {
+        Employee employee = Employee.builder()
+                .id(id)
+                .status(status)
+                .build();
+
+        int update = employeeMapper.updateById(employee);
+        if(update == 0) {
+            return Result.error(ACCOUNT_NOT_FOUND);
+        }
+        return Result.success();
     }
 
 }

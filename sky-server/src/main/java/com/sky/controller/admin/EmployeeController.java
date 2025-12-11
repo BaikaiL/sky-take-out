@@ -72,14 +72,30 @@ public class EmployeeController {
         return Result.success();
     }
 
+    /**
+     * 新增员工
+     * @param employeeDTO
+     * @return
+     */
     @PostMapping
     public Result save(@RequestBody EmployeeDTO employeeDTO){
         return employeeService.save(employeeDTO);
     }
 
+    /**
+     * 员工分页查询
+     * @param employeePageQueryDTO
+     * @return
+     */
     @GetMapping("/page")
     public Result<Page<Employee>> page(EmployeePageQueryDTO employeePageQueryDTO){
         return employeeService.page(employeePageQueryDTO);
+    }
+
+    @PostMapping("/status/{status}")
+    public Result startOrStop(@PathVariable Integer status, Long id){
+        log.info("更新员工状态：{}，{}", status,id);
+        return employeeService.startOrStop(status, id);
     }
 
 }
