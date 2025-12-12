@@ -1,12 +1,13 @@
 package com.sky.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -38,5 +39,6 @@ public class User implements Serializable {
     private String avatar;
 
     //注册时间
+    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }
