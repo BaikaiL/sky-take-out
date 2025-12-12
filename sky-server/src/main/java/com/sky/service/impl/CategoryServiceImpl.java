@@ -2,6 +2,7 @@ package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 //import com.github.pagehelper.Page;
 //import com.github.pagehelper.PageHelper;
@@ -56,6 +57,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 //        category.setUpdateTime(LocalDateTime.now());
 //        category.setCreateUser(BaseContext.getCurrentId());
 //        category.setUpdateUser(BaseContext.getCurrentId());
+
         save(category);
     }
 
