@@ -53,4 +53,16 @@ public class DishController {
 		log.info("删除菜品：{}", ids);
 		return dishService.deleteDish(ids);
 	}
+
+	@GetMapping("/{id}")
+	public Result<DishVO> getDishById(@PathVariable Long id){
+		log.info("根据id查询菜品和口味: {}", id);
+		return dishService.getDishById(id);
+	}
+
+	@PutMapping
+	public Result updateDish(@RequestBody DishDTO dishDTO){
+		log.info("更新菜品信息：{}",dishDTO);
+		return dishService.updateDish(dishDTO);
+	}
 }

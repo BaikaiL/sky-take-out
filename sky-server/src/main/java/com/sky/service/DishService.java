@@ -16,4 +16,8 @@ public interface DishService extends IService<Dish> {
 	Result<Page<DishVO>> pageQuery(DishPageQueryDTO dishPageQueryDTO);
 
 	Result deleteDish(List<Long> ids);
+
+	Result<DishVO> getDishById(Long id);
+
+	Result updateDish(DishDTO dishDTO);
 }

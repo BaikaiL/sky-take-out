@@ -100,10 +100,49 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 		removeByIds(ids);
 
 		// 删除菜品关联的口味数据 (dish_flavor)
-		LambdaQueryWrapper<DishFlavor> flavorWrapper = new LambdaQueryWrapper<>();
-		flavorWrapper.in(DishFlavor::getDishId, ids);
-		dishFlavorService.remove(flavorWrapper);
+		dishFlavorService.lambdaUpdate()
+				.in(DishFlavor::getDishId, ids)
+				.remove(); // Service 提供的 remove 方法
 
+		return Result.success();
+	}
+
+	@Override
+	public Result<DishVO> getDishById(Long id) {
+
+		DishVO dishVO = new DishVO();
+		// 1.查询dish
+		Dish dish = getById(id);
+		BeanUtils.copyProperties(dish, dishVO);
+		// 2.查询对应的口味
+		List<DishFlavor> flavors = dishFlavorService.lambdaQuery()
+				.eq(DishFlavor::getDishId, id)
+				.list();
+		dishVO.setFlavors(flavors);
+
+		return Result.success(dishVO);
+	}
+
+	@Override
+	@Transactional
+	public Result updateDish(DishDTO dishDTO) {
+
+		// 1.更新菜品数据
+		Dish dish = new Dish();
+		BeanUtils.copyProperties(dishDTO, dish);
+		Long dishId = dishDTO.getId();
+		// 2.更新口味数据
+		dishFlavorService.lambdaUpdate()
+				.in(DishFlavor::getDishId, dishId)
+				.remove(); // Service 提供的 remove 方法
+
+		List<DishFlavor> flavors = dishDTO.getFlavors();
+		if (flavors != null && !flavors.isEmpty()) {
+			// 遍历集合，给每个口味赋予 dishId
+			flavors.forEach(dishFlavor -> dishFlavor.setDishId(dishId));
+			//  直接调用 Service 的批量保存方法
+			dishFlavorService.saveBatch(flavors);
+		}
 		return Result.success();
 	}
 }
