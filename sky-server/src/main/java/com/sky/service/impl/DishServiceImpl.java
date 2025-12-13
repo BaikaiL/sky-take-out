@@ -54,8 +54,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	public Result saveWithFlavor(DishDTO dishDTO) {
 
 		// 删除缓存数据库
-		String key = DISH_KEY + dishDTO.getCategoryId();
-		redisTemplate.delete(key);
+//		String key = DISH_KEY + dishDTO.getCategoryId();
+//		redisTemplate.delete(key);
 
 		Dish dish = new Dish();
 		BeanUtils.copyProperties(dishDTO, dish);
@@ -119,8 +119,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 				.in(DishFlavor::getDishId, ids)
 				.remove(); // Service 提供的 remove 方法
 		// 删除缓存数据库
-		Set<String> dish = redisTemplate.keys("dish:*");
-		redisTemplate.delete(dish);
+//		Set<String> dish = redisTemplate.keys("dish:*");
+//		redisTemplate.delete(dish);
 		return Result.success();
 	}
 
@@ -143,8 +143,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	@Override
 	@Transactional
 	public Result updateDish(DishDTO dishDTO) {
-		Set<String> dishSet = redisTemplate.keys("dish:*");
-		redisTemplate.delete(dishSet);
+//		Set<String> dishSet = redisTemplate.keys("dish:*");
+//		redisTemplate.delete(dishSet);
 		// 1.更新菜品数据
 		Dish dish = new Dish();
 		BeanUtils.copyProperties(dishDTO, dish);
@@ -174,10 +174,10 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
 
 		// 先查缓存数据库
-		List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(DISH_KEY + categoryId);
-		if (list != null) {
-			return list;
-		}
+//		List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(DISH_KEY + categoryId);
+//		if (list != null) {
+//			return list;
+//		}
 
 		// 缓存数据库没有，查数据库
 		LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<Dish>()
@@ -203,7 +203,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 		}
 
 		// 保存到缓存数据库
-		redisTemplate.opsForValue().set(DISH_KEY + categoryId, dishVOList, 7, TimeUnit.DAYS);
+//		redisTemplate.opsForValue().set(DISH_KEY + categoryId, dishVOList, 7, TimeUnit.DAYS);
 
 		// 返回
 		return dishVOList;
@@ -218,8 +218,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 				.build();
 
 		updateById(dish);
-		Set<String> dishSet = redisTemplate.keys("dish:*");
-		redisTemplate.delete(dishSet);
+//		Set<String> dishSet = redisTemplate.keys("dish:*");
+//		redisTemplate.delete(dishSet);
 		return Result.success();
 
 	}
