@@ -208,4 +208,19 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 		// 返回
 		return dishVOList;
 	}
+
+	@Override
+	public Result setStatus(Integer status, Long id) {
+
+		Dish dish = Dish.builder()
+				.id(id)
+				.status(status)
+				.build();
+
+		updateById(dish);
+		Set<String> dishSet = redisTemplate.keys("dish:*");
+		redisTemplate.delete(dishSet);
+		return Result.success();
+
+	}
 }

@@ -65,4 +65,10 @@ public class DishController {
 		log.info("更新菜品信息：{}",dishDTO);
 		return dishService.updateDish(dishDTO);
 	}
+
+	@PostMapping("/status/{status}")
+	public Result setStatus(@PathVariable Integer status, Long id){
+		log.info("设置菜品状态：{}", status);
+		return dishService.setStatus(status, id);
+	}
 }

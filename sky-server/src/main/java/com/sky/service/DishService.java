@@ -27,4 +27,6 @@ public interface DishService extends IService<Dish> {
 	 * @return
 	 */
 	List<DishVO> listWithFlavor(Long categoryId);
+
+	Result setStatus(Integer status, Long id);
 }
