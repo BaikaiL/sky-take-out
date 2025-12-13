@@ -20,4 +20,11 @@ public interface DishService extends IService<Dish> {
 	Result<DishVO> getDishById(Long id);
 
 	Result updateDish(DishDTO dishDTO);
+
+	/**
+	 * 条件查询菜品和口味
+	 * @param categoryId
+	 * @return
+	 */
+	List<DishVO> listWithFlavor(Long categoryId);
 }

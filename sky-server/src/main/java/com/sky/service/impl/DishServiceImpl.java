@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.sky.constant.StatusConstant.ENABLE;
@@ -144,5 +145,35 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 			dishFlavorService.saveBatch(flavors);
 		}
 		return Result.success();
+	}
+
+	/**
+	 * 条件查询菜品和口味
+	 * @param categoryId
+	 * @return
+	 */
+	public List<DishVO> listWithFlavor(Long categoryId) {
+		LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<Dish>()
+				.eq(Dish::getCategoryId, categoryId)
+				.eq(Dish::getStatus, ENABLE);
+		List<Dish> dishList = list(lambdaQueryWrapper);
+
+		List<DishVO> dishVOList = new ArrayList<>();
+
+		for (Dish d : dishList) {
+			DishVO dishVO = new DishVO();
+			BeanUtils.copyProperties(d,dishVO);
+
+
+//			List<DishFlavor> flavors = dishFlavorMapper.getByDishId(d.getId());
+			//根据菜品id查询对应的口味
+			List<DishFlavor> flavors = dishFlavorService.lambdaQuery()
+					.eq(DishFlavor::getDishId, d.getId())
+					.list();
+			dishVO.setFlavors(flavors);
+			dishVOList.add(dishVO);
+		}
+
+		return dishVOList;
 	}
 }
