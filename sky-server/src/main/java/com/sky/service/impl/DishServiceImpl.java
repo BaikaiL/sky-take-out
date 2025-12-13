@@ -18,11 +18,14 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.sky.constant.StatusConstant.ENABLE;
 
@@ -35,6 +38,12 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	@Autowired
 	private SetmealDishMapper setmealDishMapper; // 注入套餐菜品关系 Mapper (用于检查关联)
 
+	@Autowired
+	private RedisTemplate redisTemplate;
+
+	// 菜品根据种类进行分类
+	public final static String DISH_KEY = "dish:";
+
 	/**
 	 * 新增菜品
 	 * @param dishDTO
@@ -43,6 +52,11 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	@Override
 	@Transactional
 	public Result saveWithFlavor(DishDTO dishDTO) {
+
+		// 删除缓存数据库
+		String key = DISH_KEY + dishDTO.getCategoryId();
+		redisTemplate.delete(key);
+
 		Dish dish = new Dish();
 		BeanUtils.copyProperties(dishDTO, dish);
 		// 保存一条菜品数据
@@ -104,7 +118,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 		dishFlavorService.lambdaUpdate()
 				.in(DishFlavor::getDishId, ids)
 				.remove(); // Service 提供的 remove 方法
-
+		// 删除缓存数据库
+		Set<String> dish = redisTemplate.keys("dish:*");
+		redisTemplate.delete(dish);
 		return Result.success();
 	}
 
@@ -127,11 +143,13 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	@Override
 	@Transactional
 	public Result updateDish(DishDTO dishDTO) {
-
+		Set<String> dishSet = redisTemplate.keys("dish:*");
+		redisTemplate.delete(dishSet);
 		// 1.更新菜品数据
 		Dish dish = new Dish();
 		BeanUtils.copyProperties(dishDTO, dish);
 		Long dishId = dishDTO.getId();
+		updateById(dish);
 		// 2.更新口味数据
 		dishFlavorService.lambdaUpdate()
 				.in(DishFlavor::getDishId, dishId)
@@ -153,6 +171,15 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 	 * @return
 	 */
 	public List<DishVO> listWithFlavor(Long categoryId) {
+
+
+		// 先查缓存数据库
+		List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(DISH_KEY + categoryId);
+		if (list != null) {
+			return list;
+		}
+
+		// 缓存数据库没有，查数据库
 		LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<Dish>()
 				.eq(Dish::getCategoryId, categoryId)
 				.eq(Dish::getStatus, ENABLE);
@@ -160,6 +187,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
 		List<DishVO> dishVOList = new ArrayList<>();
 
+		// 给每个菜品设置口味
 		for (Dish d : dishList) {
 			DishVO dishVO = new DishVO();
 			BeanUtils.copyProperties(d,dishVO);
@@ -174,6 +202,10 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 			dishVOList.add(dishVO);
 		}
 
+		// 保存到缓存数据库
+		redisTemplate.opsForValue().set(DISH_KEY + categoryId, dishVOList, 7, TimeUnit.DAYS);
+
+		// 返回
 		return dishVOList;
 	}
 }
