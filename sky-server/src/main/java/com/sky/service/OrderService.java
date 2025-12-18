@@ -39,4 +39,6 @@ public interface OrderService extends IService<Orders> {
 	void delivery(Long id);
 
 	void complete(Long id);
+
+	Result reminder(Long id);
 }

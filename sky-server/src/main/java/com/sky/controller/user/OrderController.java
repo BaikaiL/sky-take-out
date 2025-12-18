@@ -87,4 +87,10 @@ public class OrderController {
 		log.info("再来一单：{}", id);
 		return orderService.repetition(id);
 	}
+
+	@GetMapping("/reminder/{id}")
+	public Result reminder(@PathVariable Long id){
+		log.info("客户催单：{}", id);
+		return orderService.reminder(id);
+	}
 }

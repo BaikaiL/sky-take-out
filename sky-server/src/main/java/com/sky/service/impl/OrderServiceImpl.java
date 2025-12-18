@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,6 +25,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +35,9 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.sky.constant.MessageConstant.*;
@@ -56,6 +60,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
 	@Autowired
 	private WeChatPayUtil weChatPayUtil;
+
+	@Autowired
+	private WebSocketServer webSocketServer;
 
 
 	/* =========================================================================
@@ -175,6 +182,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 //		update(orders);
 		updateById(orders);
 
+		// 使用websocket向商家推送订单提醒
+		Map map = new HashMap<>();
+		map.put("type", 1);
+		map.put("orderId", ordersDB.getId());
+		map.put("content", "订单号：" + ordersDB.getNumber());
+		webSocketServer.sendToAllClient(JSON.toJSONString(map));
 	}
 
 	@Override
@@ -431,6 +444,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 		updateById(newOrders);
 	}
 
+	@Override
+	public Result reminder(Long id) {
+		Orders orders = getById(id);
+
+		if (orders == null) {
+			throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+		}
+
+		Map map = new HashMap<>();
+		map.put("type", 2);
+		map.put("orderId", id);
+		map.put("content", "订单号：" + orders.getNumber());
+		webSocketServer.sendToAllClient(JSON.toJSONString(map));
+
+		return Result.success();
+	}
 
 	// ================== 用户商家共有/辅助方法 (复用原有逻辑，稍作修改) ==================
 

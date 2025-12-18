@@ -1,4 +1,4 @@
-package com.sky.tack;
+package com.sky.task;
 
 import com.sky.entity.Orders;
 import com.sky.service.OrderService;
@@ -17,6 +17,9 @@ public class OrderTask {
 	@Autowired
 	private OrderService orderService;
 
+	/**
+	 * 处理支付超时订单
+	 */
 	@Scheduled(cron = "0 * * * * ?")
 	public void processingTimeoutOrders() {
 		log.info("处理支付超时订单开始");
@@ -37,6 +40,9 @@ public class OrderTask {
 		log.info("处理支付超时订单结束");
 	}
 
+	/**
+	 * 处理处于派送中的订单
+	 */
 	@Scheduled(cron = "0 0 1 * * ?")
 	private void processDeliveryOrders(){
 		log.info("处理本日未确认订单开始");

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.OrderMapper">
+    <select id="sumTurnoverByDate" resultType="java.util.Map">
+        select DATE_FORMAT(order_time, '%Y-%m-%d') as date, sum(amount) as turnover
+        from orders
+        where order_time between #{begin} and #{end}
+        and status = #{status}
+        group by DATE_FORMAT(order_time, '%Y-%m-%d') /* 按天分组 */
+    </select>
+
+    <select id="getSalesTop10" resultType="com.sky.dto.GoodsSalesDTO">
+        SELECT
+            od.name,
+            SUM(od.number) AS number
+        FROM order_detail od, orders o
+        WHERE od.order_id = o.id
+          AND o.status = 5
+          AND o.order_time &gt; #{begin}
+          AND o.order_time &lt; #{end}
+        GROUP BY od.name
+        ORDER BY number DESC
+        LIMIT 0, 10
+    </select>
+</mapper>
