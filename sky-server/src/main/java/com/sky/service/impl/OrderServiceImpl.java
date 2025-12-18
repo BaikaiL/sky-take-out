@@ -510,6 +510,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 					orderVO.setAddress(addressBook.getProvinceName() + addressBook.getCityName() + addressBook.getDistrictName() + addressBook.getDetail());
 				}
 				list.add(orderVO);
+
 			}
 		}
 		return list;

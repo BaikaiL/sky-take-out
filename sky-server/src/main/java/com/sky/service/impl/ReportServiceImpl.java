@@ -5,18 +5,21 @@ import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.entity.User;
 import com.sky.mapper.OrderMapper;
-import com.sky.mapper.UserMapper;
-import com.sky.service.OrderService;
 import com.sky.service.ReportService;
 import com.sky.service.UserService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.SalesTop10ReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.service.WorkspaceService;
+import com.sky.vo.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +40,9 @@ public class ReportServiceImpl implements ReportService {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private WorkspaceService workspaceService;
 
 	/**
 	 * 营业额统计
@@ -258,6 +264,128 @@ public class ReportServiceImpl implements ReportService {
 				.nameList(nameList)
 				.numberList(numberList)
 				.build();
+	}
+
+	@Override
+	public void exportBusinessData(HttpServletResponse response) {
+
+		LocalDateTime begin = LocalDateTime.of(LocalDate.now().minusDays(30), LocalTime.MIN);
+		LocalDateTime end = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+
+		BusinessDataVO businessData = workspaceService.getBusinessData(begin, end);
+
+		// 输入流对象
+		InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
+
+		try {
+			XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+
+			// 获取第一个工作表
+			 XSSFSheet sheet = workbook.getSheetAt(0);
+			 // 填充数据
+			sheet.getRow(1).getCell(1).setCellValue(businessData.getTurnover());
+
+			XSSFRow row = sheet.getRow(3);
+			row.getCell(2).setCellValue(businessData.getTurnover());
+			row.getCell(4).setCellValue(businessData.getOrderCompletionRate());
+			row.getCell(6).setCellValue(businessData.getNewUsers());
+
+			row = sheet.getRow(4);
+			row.getCell(2).setCellValue(businessData.getValidOrderCount());
+			row.getCell(4).setCellValue(businessData.getUnitPrice());
+
+			// 查询订单相关数据 (营业额、有效订单、总订单)
+			List<Map<String, Object>> orderStats = orderMapper.getBusinessStatistics(begin, end);
+
+			//查询用户相关数据 (新增用户)
+			QueryWrapper<User> wrapper = new QueryWrapper<>();
+			wrapper.select("DATE_FORMAT(create_time, '%Y-%m-%d') as date", "count(*) as count")
+					.ge("create_time", begin)
+					.le("create_time", end)
+					.groupBy("DATE_FORMAT(create_time, '%Y-%m-%d')");
+			List<Map<String, Object>> userStats = userService.getBaseMapper().selectMaps(wrapper);
+
+			// 将数据库结果转为 Map<日期, 数据> 方便查找
+			Map<String, Map<String, Object>> orderDataMap = orderStats.stream()
+					.collect(Collectors.toMap(m -> (String) m.get("date"), m -> m));
+
+			Map<String, Integer> userMap = userStats.stream()
+					.collect(Collectors.toMap(
+							m -> (String) m.get("date"),
+							m -> ((Number) m.get("count")).intValue()
+					));
+
+			List<BusinessDataVO> reportList = new ArrayList<>();
+			List<LocalDate> dateList = getLocalDates(begin.toLocalDate(), end.toLocalDate());
+			for (LocalDate date : dateList) {
+				String dateStr = date.toString();
+
+				// --- 提取数据 (如果没有数据则补0) ---
+				Map<String, Object> dayOrderData = orderDataMap.getOrDefault(dateStr, new HashMap<>());
+
+				// 营业额
+				Double turnover = dayOrderData.get("turnover") == null ? 0.0 : ((Number) dayOrderData.get("turnover")).doubleValue();
+				// 有效订单
+				Integer validOrderCount = dayOrderData.get("validOrderCount") == null ? 0 : ((Number) dayOrderData.get("validOrderCount")).intValue();
+				// 总订单
+				Integer totalOrderCount = dayOrderData.get("totalOrderCount") == null ? 0 : ((Number) dayOrderData.get("totalOrderCount")).intValue();
+				// 新增用户
+				Integer newUsers = userMap.getOrDefault(dateStr, 0);
+
+				// --- 计算衍生指标 ---
+				// 订单完成率 = 有效 / 总
+				Double orderCompletionRate = 0.0;
+				// 平均客单价 = 营业额 / 有效
+				Double unitPrice = 0.0;
+
+				if (totalOrderCount != 0) {
+					orderCompletionRate = validOrderCount.doubleValue() / totalOrderCount;
+				}
+				if (validOrderCount != 0) {
+					unitPrice = turnover / validOrderCount;
+				}
+
+				// --- 添加到列表 ---
+				reportList.add(BusinessDataVO.builder()
+						.date(date)
+						.turnover(turnover)
+						.validOrderCount(validOrderCount)
+						.orderCompletionRate(orderCompletionRate)
+						.unitPrice(unitPrice)
+						.newUsers(newUsers)
+						.build());
+			}
+
+			// 填充下方的明细列表 (假设从第 8 行开始)
+			int rowIndex = 7;
+			for (BusinessDataVO vo : reportList) {
+				row = sheet.getRow(rowIndex);
+				if (row == null) { row = sheet.createRow(rowIndex); }
+
+				// 根据 image_bfcb72.png 的列顺序填充
+				row.getCell(1).setCellValue(vo.getDate().toString());        // 日期
+				row.getCell(2).setCellValue(vo.getTurnover());             // 营业额
+				row.getCell(3).setCellValue(vo.getValidOrderCount());      // 有效订单
+				row.getCell(4).setCellValue(vo.getOrderCompletionRate());  // 完成率
+				row.getCell(5).setCellValue(vo.getUnitPrice());            // 客单价
+				row.getCell(6).setCellValue(vo.getNewUsers());             // 新增用户
+
+				rowIndex++;
+			}
+
+			ServletOutputStream outputStream = response.getOutputStream();
+			workbook.write(outputStream);
+
+
+			// 关闭资源
+			workbook.close();
+			inputStream.close();
+			outputStream.close();
+
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**

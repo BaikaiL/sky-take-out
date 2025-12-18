@@ -52,4 +52,18 @@
             </if>
         </where>
     </select>
+    <select id="getBusinessStatistics" resultType="java.util.Map">
+        SELECT
+            DATE_FORMAT(order_time, '%Y-%m-%d') as date,
+            -- 1. 营业额：只累加状态为5(已完成)的金额
+            SUM(CASE WHEN status = 5 THEN amount ELSE 0 END) as turnover,
+            -- 2. 有效订单数：只统计状态为5的数量
+            SUM(CASE WHEN status = 5 THEN 1 ELSE 0 END) as validOrderCount,
+            -- 3. 总订单数：统计所有
+            COUNT(id) as totalOrderCount
+        FROM orders
+        WHERE order_time BETWEEN #{begin} AND #{end}
+        GROUP BY DATE_FORMAT(order_time, '%Y-%m-%d')
+        ORDER BY date ASC
+    </select>
 </mapper>

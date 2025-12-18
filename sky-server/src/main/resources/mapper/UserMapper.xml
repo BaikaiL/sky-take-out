@@ -13,4 +13,11 @@
             </if>
         </where>
     </select>
+
+    <select id="countUserByDate" resultType="java.util.Map">
+        SELECT DATE_FORMAT(create_time, '%Y-%m-%d') as date, COUNT(id) as count
+        FROM user
+        WHERE create_time BETWEEN #{begin} AND #{end}
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')
+    </select>
 </mapper>

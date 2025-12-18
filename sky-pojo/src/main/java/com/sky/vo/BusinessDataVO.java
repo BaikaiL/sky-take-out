@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * 数据概览
@@ -15,6 +16,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BusinessDataVO implements Serializable {
+
+    private LocalDate date;// 日期
 
     private Double turnover;//营业额
 

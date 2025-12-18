@@ -13,6 +13,9 @@ import java.util.Map;
 @Mapper
 public interface OrderMapper extends BaseMapper<Orders> {
 
+	/**
+	 * 统计指定时间区间内的营业额
+	 */
 	List<Map<String, Object>> sumTurnoverByDate(@Param("begin") LocalDateTime beginTime,
 	                                            @Param("end") LocalDateTime endTime,
 	                                            @Param("status") Integer status);
@@ -35,5 +38,8 @@ public interface OrderMapper extends BaseMapper<Orders> {
 	 */
 	Double sumByMap(Map map);
 
+	// 统计指定时间段内的每日：营业额、有效订单数、总订单数
+	List<Map<String, Object>> getBusinessStatistics(@Param("begin") LocalDateTime begin,
+	                                                @Param("end") LocalDateTime end);
 
 }
