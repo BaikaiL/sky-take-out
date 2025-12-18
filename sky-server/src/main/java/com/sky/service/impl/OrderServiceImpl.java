@@ -506,7 +506,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
 				// 获取详细地址信息
 				AddressBook addressBook = addressBookMapper.getById(orders.getAddressBookId());
-				orderVO.setAddress(addressBook.getProvinceName() + addressBook.getCityName() + addressBook.getDistrictName() + addressBook.getDetail());
+				if(addressBook != null) {
+					orderVO.setAddress(addressBook.getProvinceName() + addressBook.getCityName() + addressBook.getDistrictName() + addressBook.getDetail());
+				}
 				list.add(orderVO);
 			}
 		}

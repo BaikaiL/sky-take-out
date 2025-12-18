@@ -22,4 +22,18 @@ public interface OrderMapper extends BaseMapper<Orders> {
 	 */
 	List<GoodsSalesDTO> getSalesTop10(@Param("begin") LocalDateTime begin,
 	                                  @Param("end") LocalDateTime end);
+
+	/**
+	 * 根据动态条件统计订单数量
+	 * keys: begin, end, status
+	 */
+	Integer countByMap(Map map);
+
+	/**
+	 * 根据动态条件统计营业额
+	 * keys: begin, end, status
+	 */
+	Double sumByMap(Map map);
+
+
 }
